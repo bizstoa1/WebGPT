@@ -8,17 +8,32 @@ const one = (state, predicate) => {
 };
 const location = state => state.match(/Browser tab: .*?URL: "([^"]+)"/)?.[1];
 const title = state => state.match(/Browser tab: .*?Title: "([^"]*)"/)?.[1];
-const modeLine = mode => mode === 'xh' ? /^(?:매우 높음|Extra High)$/i : /^Pro$/;
 const label = line => line.replace(/^\d+ (?:pop up )?button(?: \([^)]*\))? (?:Description: )?/, '').split(', ID:')[0];
+const aliases = new Map([['xh', 'xh'], ['xhigh', 'xh'], ['p', 'pro'], ['pro', 'pro']]);
+const normalizeMode = mode => typeof mode === 'string' ? aliases.get(mode.toLowerCase()) : undefined;
+const profile = mode => mode === 'xh'
+  ? { model: 'GPT-5.6 Sol', effort: 'Extra High' }
+  : { model: 'GPT-6 Astra', effort: null };
+const matchesMode = (mode, value) => {
+  const selected = value.replace(/\s+/g, ' ').trim();
+  if (mode === 'xh') {
+    return /^(?:GPT-5\.6 Sol )?(?:매우 높음|Extra High|Very High)$/i.test(selected);
+  }
+  // The current Work picker exposes GPT-6 Pro by its model name, GPT-6 Astra,
+  // and keeps reasoning effort as a separate slider. Ultra is an effort, not
+  // a synonym for Pro, so any visibly selected Astra effort is acceptable.
+  return /^Pro$/i.test(selected) || /^GPT-6 Astra(?: .+)?$/i.test(selected);
+};
 
 export async function sendOnce(tab, prompt, mode = 'xh') {
-  if (!['xh', 'pro'].includes(mode)) throw Error('unsupported mode');
+  mode = normalizeMode(mode);
+  if (!mode) throw Error('unsupported mode');
   if (sent.has(tab)) throw Error('already sent or attempted; inspect submission, never resend');
   const state = await observe(tab);
   const url = location(state);
   if (!url || !/^https:\/\/chatgpt\.com\/?$/.test(url)) return { status: 'needs_new_chat', url };
-  const chosen = one(state, line => /^\d+ (?:pop up )?button/.test(line) && modeLine(mode).test(label(line)));
-  if (chosen === null) return { status: 'needs_mode', mode };
+  const chosen = one(state, line => /^\d+ (?:pop up )?button/.test(line) && matchesMode(mode, label(line)));
+  if (chosen === null) return { status: 'needs_mode', mode, expected: profile(mode) };
   const composer = one(state, line => /^\d+ text entry area/.test(line) && /ID: prompt-textarea(?:,|$)/.test(line));
   if (composer === null) return { status: 'needs_composer' };
   sent.add(tab); // Any subsequent ambiguity must not cause a duplicate user message.

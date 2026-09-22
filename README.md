@@ -34,7 +34,13 @@ Use webgpt xh as subagents to develop this project's planned features in paralle
 webgpt p Research this topic and summarize the findings.
 ```
 
-`xh` = Extra High · `p` = Pro.
+The current ChatGPT Work picker combines model and reasoning in one control:
+
+- `xh` = **GPT-5.6 Sol + Extra High**
+- `p` = **GPT-6 Astra** (the model behind GPT-6 Pro)
+
+GPT-6 Astra's reasoning slider is separate from the Pro model choice, so `Ultra`
+is not treated as another spelling of `Pro`.
 
 ### Use ChatGPT yourself — `open`
 

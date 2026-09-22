@@ -46,7 +46,14 @@ Reuse the worker and one quiet wait process; do not add per-task daemons or cron
 
 ## Dispatch
 
-- Verify the requested UI mode: `xh|xhigh` = Extra High (default), `p|pro` = Pro.
+- The current ChatGPT Work picker separates the model from reasoning effort and renders them in
+  one combined button. Resolve aliases as profiles, not literal button text:
+  `xh|xhigh` = **GPT-5.6 Sol + Extra High** (Korean UI: `매우 높음`, default), while
+  `p|pro` = **GPT-6 Astra**, the model behind GPT-6 Pro. Astra's visible reasoning effort is a
+  separate choice; do not redefine `Pro` as `Ultra`, and do not accept Astra Extra High as `xh`
+  or Sol Pro as `p`. A visibly observed legacy standalone `Extra High` or `Pro` control remains
+  compatible. If the exact requested profile is unavailable, report it instead of substituting a
+  different model.
 - Send exactly one user message per task chat. Prepare the complete assignment before sending;
   never send follow-ups, corrections or continuation requests in that chat. If further work is
   needed, preserve and close the original task, then use a new chat with the necessary context.
@@ -80,7 +87,7 @@ permission gates; never echo image/base64 payloads as text or export the convers
 
 After required browser initialization, import the pure CUA helpers where supported:
 `var {sendOnce, deleteAndClose} = await import('<installed-skill>/scripts/browser.mjs')`.
-Use `sendOnce(tab, prompt, 'xh'|'pro')` on the new owned tab; after collection use
+Use `sendOnce(tab, prompt, 'xh'|'xhigh'|'p'|'pro')` on the new owned tab; after collection use
 `deleteAndClose(tab, cua, browserId, ownedChatUrl)` after preserving the result and establishing
 ownership. Helpers return compact outcomes and stop on unknown controls; handle those
 with grounded UI actions. Never resend an unconfirmed submission. If imports are unavailable,
